@@ -1,0 +1,20 @@
+<li class="run-row">
+  <div class="run-main">
+    <div class="run-name">Run {{ run.id }} &middot; {{ (run.reference_key or "?").rsplit("/", 1)[-1] }}</div>
+    <div class="mono run-meta">
+      {{ run.created }}{% if run.reel_id %} &middot; <a href="/reels/{{ run.reel_id }}">reel {{ run.reel_id }}</a>{% endif %}
+    </div>
+    {% if run.error %}
+    <div style="font-size: 12px; color: var(--reject); margin-top: 4px; word-break: break-word">{{ run.error[:200] }}</div>
+    {% endif %}
+  </div>
+  {% if run.status == "done" %}
+  <span class="chip chip-keep">Done</span>
+  {% elif run.status == "running" %}
+  <span class="chip chip-ember"><span class="dot dot-pulse"></span>Running</span>
+  {% elif run.status == "error" %}
+  <span class="chip chip-error">Error</span>
+  {% else %}
+  <span class="chip chip-neutral">Queued</span>
+  {% endif %}
+</li>

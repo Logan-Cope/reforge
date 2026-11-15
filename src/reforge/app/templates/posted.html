@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Posted - Reforge{% endblock %}
+{% block content %}
+<header class="page-head rise" style="--i: 0">
+  <a href="/" class="back">&lsaquo; Dashboard</a>
+  <h1 class="display kicker">Posted</h1>
+  <p class="page-sub">{{ upcoming | length }} scheduled &middot; {{ live | length }} live</p>
+</header>
+
+{% if upcoming %}
+<div class="section-label rise" style="--i: 1">Scheduled</div>
+<ul class="poster-wall">
+  {% for r in upcoming %}
+  <li class="rise" style="--i: {{ 2 + loop.index0 }}">
+    <a href="/reels/{{ r.id }}" class="poster pressable">
+      <div class="frame">
+        {% if r.thumbnail_key %}<img src="{{ r.thumbnail_key|thumb_url }}" alt="" loading="lazy">{% endif %}
+        <div class="scrim"></div>
+      </div>
+      <span class="chip chip-swap">
+        {{ "Publishing" if r.sched_status == "publishing" else "Scheduled" }}</span>
+      <div class="poster-meta">
+        <div class="poster-title">Reel {{ r.id }}</div>
+        <div class="poster-sub">{{ r.when_local }}{% if r.sched_as_trial %} &middot; trial{% endif %}</div>
+      </div>
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if live %}
+<div class="section-label rise" style="--i: 2">Live on Instagram</div>
+<ul class="poster-wall">
+  {% for r in live %}
+  <li class="rise" style="--i: {{ 3 + loop.index0 }}">
+    <a href="/reels/{{ r.id }}" class="poster pressable">
+      <div class="frame">
+        {% if r.thumbnail_key %}<img src="{{ r.thumbnail_key|thumb_url }}" alt="" loading="lazy">{% endif %}
+        <div class="scrim"></div>
+      </div>
+      <span class="chip chip-keep">{{ "Trial live" if r.is_trial else "Posted" }} &#10003;</span>
+      <div class="poster-meta">
+        <div class="poster-title">Reel {{ r.id }}</div>
+        <div class="poster-sub">posted {{ r.posted }}{% if r.is_trial %} &middot; trial{% endif %}</div>
+      </div>
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if not upcoming and not live %}
+<p class="page-sub rise" style="--i: 1">Nothing scheduled or posted yet. Approve a
+reel and tap Schedule.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,23 @@
+[
+  {
+    "render": "reel-01",
+    "score": 58,
+    "would_post": false,
+    "weak_beats": [
+      3,
+      5,
+      10,
+      14
+    ]
+  },
+  {
+    "render": "reel-02",
+    "score": 61,
+    "would_post": false,
+    "weak_beats": [
+      0,
+      6,
+      8
+    ]
+  }
+]

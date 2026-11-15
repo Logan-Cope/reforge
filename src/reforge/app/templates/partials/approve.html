@@ -1,0 +1,24 @@
+{# Graded approve: one reel-level judgment replaces tapping Keep per beat. A positive
+   grade endorses every unflagged beat, so the judge learns from all of them in one tap.
+   `grade`/`accepted_count`/`flagged` come from the route or reel.html (page load). #}
+{% set g = grade if grade is defined else reel.grade %}
+<div class="grade-block">
+  {% if g == 'not_it' %}
+  <p class="grade-sub mono">Concept passed &middot; won't post</p>
+  {% elif g %}
+  <p class="grade-sub mono">{{ accepted_count }} accepted &middot; {{ flagged }} flagged &middot; nothing else to tap</p>
+  {% else %}
+  <p class="grade-sub mono">How'd it land? Flag the misses, then grade the reel.</p>
+  {% endif %}
+  <div class="grade-row">
+    {% for opt, label, cls in [
+        ("post_worthy", "Post-worthy", "btn-keep"),
+        ("would_test", "Would test", "btn-outline-swap"),
+        ("not_it", "Not it", "btn-outline-flag")] %}
+    <button hx-post="/reels/{{ reel.id }}/grade" hx-vals='{"grade": "{{ opt }}"}'
+            hx-target="#approve-area" hx-swap="innerHTML transition:true"
+            hx-disabled-elt="this"
+            class="btn {{ cls }}{% if g == opt %} is-active{% endif %}">{{ label }}</button>
+    {% endfor %}
+  </div>
+</div>

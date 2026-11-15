@@ -1,0 +1,26 @@
+# ship ONLY what the review function needs: api/, src/ (incl. the synthetic demo
+# data in src/reforge/demo/), requirements.txt, vercel.json
+/library/
+/output/
+/data/
+/reference/
+/identity_reference/
+/taste/
+/models/
+/docs/
+/eval_results/
+/tests/
+/scripts/
+/db/
+/.github/
+.venv/
+.git/
+.pytest_cache/
+.ruff_cache/
+/pyproject.toml
+/requirements-dev.txt
+/Dockerfile
+/render.yaml
+/.dockerignore
+.env
+.env.*

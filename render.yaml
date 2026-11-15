@@ -1,0 +1,18 @@
+# Render blueprint for the Reforge review app. Connect the GitHub repo in the
+# Render dashboard and it picks this up. Secrets (DATABASE_URL, ANTHROPIC_API_KEY,
+# AI_GATEWAY_API_KEY, LANGSMITH_API_KEY, TAVILY_API_KEY, INVITE_CODE, storage creds)
+# are set in the dashboard, never here.
+services:
+  - type: web
+    name: reforge
+    runtime: docker
+    plan: standard # ViT-L-14 CLIP needs RAM; bump to pro (4GB) if OOM on query-time embeds
+    healthCheckPath: /healthz # doubles as the Supabase keep-alive ping
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: "8000"
+      - key: RETRIEVER
+        value: hybrid
+      - key: GATE_MAX_ITERS
+        value: "2"

@@ -1,0 +1,8 @@
+{# One beat-rail chip. Rendered in the rail loop on page load, and returned OOB after a
+   verdict so its thumbnail (follows the swapped clip) + verdict color update live. #}
+<button type="button" id="rail-chip-{{ slot.id }}"
+        class="beat-chip beat-chip-{{ slot.human_verdict or 'open' }}"{% if oob %} hx-swap-oob="true"{% endif %}
+        data-slot="{{ slot.id }}" data-start="{{ slot.start_s or 0 }}" data-end="{{ slot.end_s or 0 }}">
+  <span class="mono">B{{ slot.idx }}</span>
+  {% if slot.thumbnail_key %}<img src="{{ slot.thumbnail_key|thumb_url }}" alt="" loading="lazy">{% endif %}
+</button>

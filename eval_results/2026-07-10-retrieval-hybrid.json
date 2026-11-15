@@ -1,0 +1,40 @@
+[
+  {
+    "run": "DISCIPLINE_judge_v1",
+    "beat": 6,
+    "hit@5": false,
+    "precision@5": 0.0,
+    "recall@5": 0.0,
+    "hit@10": false,
+    "precision@10": 0.0,
+    "recall@10": 0.0,
+    "hit@20": false,
+    "precision@20": 0.0,
+    "recall@20": 0.0,
+    "mrr": 0.0,
+    "resolved_fragments": 2,
+    "unresolved_fragments": 0,
+    "good_not_retrieved": [
+      "library/Shorts/Outdoors/Jogging/dji_mimo_20251007_184410_20251007184405_1760061759967_video.mp4"
+    ]
+  },
+  {
+    "run": "DISCIPLINE_judge_v1",
+    "beat": 15,
+    "hit@5": false,
+    "precision@5": 0.0,
+    "recall@5": 0.0,
+    "hit@10": false,
+    "precision@10": 0.0,
+    "recall@10": 0.0,
+    "hit@20": false,
+    "precision@20": 0.0,
+    "recall@20": 0.0,
+    "mrr": 0.0,
+    "resolved_fragments": 2,
+    "unresolved_fragments": 0,
+    "good_not_retrieved": [
+      "library/Shorts/Outdoors/Walking/C2095.MP4"
+    ]
+  }
+]

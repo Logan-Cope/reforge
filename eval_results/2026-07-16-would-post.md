@@ -1,0 +1,17 @@
+| score | would_post |
+| --- | --- |
+| 64 | False |
+| 48 | False |
+| 58 | False |
+| 62 | False |
+| 62 | False |
+| 52 | False |
+| 88 | True |
+| 61 | False |
+| 72 | False |
+| 54 | False |
+| 54 | False |
+| 72 | False |
+| 54 | False |
+| 48 | False |
+| 62 | False |

@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: pip install -r requirements-dev.txt mypy
+      - name: Lint
+        run: ruff check .
+      - name: Typecheck (web app)
+        run: mypy src/reforge/app --ignore-missing-imports
+      - name: Tests (no API keys, no database)
+        run: pytest -q
+      - name: Eval numbers reproduce from eval_results/
+        run: python scripts/summarize_evals.py
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # the CLI over full history (the gitleaks action scans first^..head, which
+      # fails on a root commit)
+      - name: gitleaks (full history)
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz | tar -xz gitleaks
+          ./gitleaks git . --redact --no-banner

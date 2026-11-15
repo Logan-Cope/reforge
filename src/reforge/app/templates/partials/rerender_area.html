@@ -1,0 +1,19 @@
+{# The approve bar's cut-freshness zone. Always present (id anchor for OOB refreshes):
+   - a re-render is queued/running -> the live-polling status banner
+   - cut_dirty                     -> "Video out of date - re-render" (the mp4 drifted:
+                                      a swap, undo-of-a-swap, or repick changed a pick)
+   - otherwise                     -> quiet "cut matches" line (nothing to do)
+   Included inline by reel.html; swap/undo/repick-done responses return it again with
+   oob=true (hx-swap-oob) so the state flips live, without a page refresh. #}
+<div id="rerender-area"{% if oob %} hx-swap-oob="true"{% endif %}>
+  {% if rerender and rerender.status in ("queued", "running") %}
+  {% with status = rerender.status %}{% include "partials/rerender_queued.html" %}{% endwith %}
+  {% elif cut_dirty %}
+  <button hx-post="/reels/{{ reel_id }}/rerender" hx-target="#rerender-area"
+          hx-swap="innerHTML transition:true" class="btn btn-outline-swap">
+    Video out of date - re-render
+  </button>
+  {% else %}
+  <span class="cut-status">Video matches the picks &#10003;</span>
+  {% endif %}
+</div>

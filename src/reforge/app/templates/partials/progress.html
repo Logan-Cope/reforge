@@ -1,0 +1,6 @@
+{# OOB header refresh: "N/M decided" + the progress bar, returned by every
+   verdict-changing response so the header tracks taps live (no page reload).
+   The id'd elements must mirror the inline markup in reel.html's header. #}
+<span id="decided-count" class="mono" style="flex: none"{% if oob %} hx-swap-oob="true"{% endif %}>{{ decided }}/{{ total }} decided</span>
+<div id="progress-fill" class="progress-fill"{% if oob %} hx-swap-oob="true"{% endif %}
+     style="width: {{ (100 * decided / total) | round(1) if total else 0 }}%"></div>

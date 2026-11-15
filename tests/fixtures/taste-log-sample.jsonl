@@ -1,0 +1,5 @@
+{"ts":"2026-01-05","run":"sample_judge_v1","event":"review_summary","kept":10,"swapped":2,"note":"synthetic sample: first judge pass, 10/12 beats landed"}
+{"ts":"2026-01-05","run":"sample_judge_v1","beat":3,"role":"run/build","judge_pick":"clip031 Running/run_0422 (wide drone run)","verdict":"swap","logan_note":"subject too small in a wide aerial; pick a ground-level run","rule":"subject must be fully in frame","swapped_to":"clip030 Running/run_0410 (full-body run toward camera)"}
+{"ts":"2026-01-05","run":"sample_judge_v1","beat":9,"role":"reflective/close","judge_pick":"clip047 Candid/setup_0013 (adjusting the camera)","verdict":"swap","logan_note":"setting up the shot, not a candid moment","rule":"exclude setup moments","swapped_to":"clip052 Walking/walk_0095 (dusk silhouette)"}
+{"ts":"2026-01-05","run":"sample_judge_v2","beats":[4,5],"logan_note":"multi-beat note lines carry no per-clip data and are skipped"}
+{"ts":"2026-01-05","run":"sample_judge_v3","beat":4,"logan_note":"note-only line with no judge_pick is skipped","rule":"reject grainy footage"}

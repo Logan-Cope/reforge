@@ -1,0 +1,17 @@
+{# A beat card in "re-pick queued/running" state: keeps the card's id/rail hooks and
+   polls the repick status route every 4s, swapping itself. When the worker finishes,
+   the poll returns the fresh full slot card (new pick, verdict cleared); on error it
+   returns the flagged card with a quiet failure line (partials/slot.html). #}
+<div id="slot-{{ slot.id }}" class="card beat-card repick-pending"
+     data-slot="{{ slot.id }}" data-verdict="flagged" data-start="{{ slot.start_s or 0 }}"
+     hx-get="/slots/{{ slot.id }}/repick/status" hx-trigger="every 4s"
+     hx-swap="outerHTML transition:true">
+  <div class="beat-body">
+    <span class="chip glass">Beat {{ slot.idx }}</span>
+    <div class="rerender-banner rerender-live">
+      <span class="dot dot-pulse"></span>
+      {% if status == "running" %}Re-picking this beat&hellip;{% else %}Re-pick queued - the worker will find a fresh take{% endif %}
+      {% if slot.human_note %}<span class="mono"> &middot; {{ slot.human_note }}</span>{% endif %}
+    </div>
+  </div>
+</div>

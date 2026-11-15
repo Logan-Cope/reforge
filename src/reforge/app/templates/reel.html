@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Reel {{ reel.id }} - Reforge{% endblock %}
+{% block content %}
+{% set decided = slots | selectattr("human_verdict") | list | length %}
+<header class="page-head rise" style="--i: 0">
+  <a href="/" class="back">&lsaquo; Dashboard</a>
+  <h1 class="display kicker">Reel {{ reel.id }}</h1>
+  <p class="page-sub" style="display: flex; justify-content: space-between; gap: 10px">
+    <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
+      {% if reel.published %}<span class="chip chip-keep">
+        {{ "Trial live" if reel.is_trial else "Posted" }} &#10003; {{ reel.posted }}</span> &middot; {% endif %}
+      {{ (reel.ref or "?").rsplit("/", 1)[-1] }} &middot; {{ reel.created }}
+    </span>
+    {# ids match partials/progress.html - verdict responses OOB-refresh these live #}
+    <span id="decided-count" class="mono" style="flex: none">{{ decided }}/{{ slots | length }} decided</span>
+  </p>
+  <div class="progress-rail">
+    <div id="progress-fill" class="progress-fill" style="width: {{ (100 * decided / (slots | length)) | round(1) if slots else 0 }}%"></div>
+  </div>
+</header>
+
+{% if reel.playable %}
+<section class="player-dock rise" style="--i: 1">
+  <div class="frame frame-player">
+    <video id="reel-player" src="{{ reel.output_key|reel_video_url }}"
+           playsinline controls preload="metadata"></video>
+  </div>
+  <div class="beat-rail" id="beat-rail">
+    {% for slot in slots %}
+    {% include "partials/beat_chip.html" %}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<div style="display: grid; gap: 16px">
+  {% for slot in slots %}
+  <div class="rise" style="--i: {{ [loop.index, 8] | min }}">
+    {% include "partials/slot.html" %}
+  </div>
+  {% endfor %}
+</div>
+
+<div class="approve-bar">
+  <div class="approve-bar-inner" id="approve-area">
+    {% set cut_dirty = reel.cut_dirty %}
+    {% set reel_id = reel.id %}
+    {% set grade = reel.grade %}
+    {% set flagged = slots | selectattr("human_verdict", "equalto", "flagged") | list | length %}
+    {% set accepted_count = (slots | length) - flagged %}
+    {% include "partials/rerender_area.html" %}
+    {% include "partials/approve.html" %}
+  </div>
+  {# trial-reel scheduling: lazy-loaded so the review routes stay untouched;
+     sits OUTSIDE #approve-area so grading (which swaps that innerHTML) can't wipe it #}
+  <div id="schedule-area" hx-get="/reels/{{ reel.id }}/schedule"
+       hx-trigger="load, htmx:afterSwap from:#approve-area" hx-swap="outerHTML"></div>
+</div>
+<script src="/static/judge.js" defer></script>
+{% endblock %}

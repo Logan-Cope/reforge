@@ -1,0 +1,145 @@
+{# effective_in is swap-aware (queries.effective_in_point): a swapped card previews the
+   SWAPPED moment's seconds, matching what the re-render will actually cut. #}
+{% set in_point = slot.effective_in if slot.effective_in is defined else ((slot.params or {}).get("in_point") or 0) %}
+{% set dur = ((slot.end_s or 0) - (slot.start_s or 0)) | round(2) %}
+{# verdict NULL + swapped_moment_id set only happens via re-pick (user swaps set
+   verdict='swapped'; undo nulls both) - surface it, or the fresh pick looks stale. #}
+{% set repicked = (not slot.human_verdict) and slot.swapped_moment_id %}
+{% set src = slot.clip_key | proxy_url %}
+<div id="slot-{{ slot.id }}" class="card beat-card"
+     data-slot="{{ slot.id }}" data-verdict="{{ slot.human_verdict or '' }}"
+     data-start="{{ slot.start_s or 0 }}">
+  <div class="frame frame-beat" data-beat-frame>
+    {% if src %}
+    <video class="beat-src" data-src="{{ src }}" data-in="{{ in_point }}" data-dur="{{ dur }}"
+           muted playsinline loop preload="none"
+           {% if slot.thumbnail_key %}poster="{{ slot.thumbnail_key|thumb_url }}"{% endif %}></video>
+    <button type="button" class="play-overlay glass" aria-label="Preview this moment">&#9654;</button>
+    {% elif slot.thumbnail_key %}
+    <img src="{{ slot.thumbnail_key|thumb_url }}" alt="" loading="lazy">
+    {% endif %}
+    <div class="scrim"></div>
+    <span class="chip-tl glass">Beat {{ slot.idx }}</span>
+    <span class="chip-tr glass">{{ "%05.2f"|format(slot.start_s or 0) }}&ndash;{{ "%05.2f"|format(slot.end_s or 0) }}</span>
+    <button type="button" class="chip-inreel glass" data-seek>In reel &#9654;</button>
+    {% if slot.human_verdict == "keep" %}
+    <span class="chip chip-keep" style="position: absolute; bottom: 10px; right: 10px">Kept</span>
+    {% elif slot.human_verdict == "weak" %}
+    <span class="chip chip-weak" style="position: absolute; bottom: 10px; right: 10px">Could be better</span>
+    {% elif slot.human_verdict == "swapped" %}
+    <span class="chip chip-swap" style="position: absolute; bottom: 10px; right: 10px">Swapped</span>
+    {% elif slot.human_verdict == "flagged" %}
+    <span class="chip chip-error" style="position: absolute; bottom: 10px; right: 10px">Flagged</span>
+    {% elif repicked %}
+    <span class="chip chip-swap" style="position: absolute; bottom: 10px; right: 10px">New take</span>
+    {% endif %}
+  </div>
+
+  <div class="beat-body">
+    {% if slot.description %}
+    <p class="desc">{{ slot.description }}</p>
+    {% endif %}
+    {% if slot.reason %}
+    <p class="judge-note">&ldquo;{{ slot.reason }}&rdquo;</p>
+    {% endif %}
+    {% if slot.ref_description %}
+    <p class="ref-note">Ref: {{ slot.ref_description }}
+      {%- if slot.quality_score is not none %} &middot; q {{ "%.2f"|format(slot.quality_score) }}{% endif %}</p>
+    {% endif %}
+    {% if repicked %}
+    <p class="human-note">New take, re-picked from your
+      {%- if slot.human_note %} flag &ldquo;{{ slot.human_note }}&rdquo;{% else %} flag{% endif %},
+      not in the rendered video yet. Keep it (then re-render), or flag/swap again.</p>
+    {% elif slot.human_note %}
+    <p class="human-note">Note: {{ slot.human_note }}</p>
+    {% endif %}
+    {% if repick_error %}
+    <p class="repick-error mono">Re-pick failed &middot; {{ repick_error[-120:] }} &middot; flag kept</p>
+    {% endif %}
+
+    {% if slot.human_verdict %}
+    <div class="btn-row">
+      <button hx-post="/slots/{{ slot.id }}/undo" hx-target="#slot-{{ slot.id }}"
+              hx-swap="outerHTML transition:true" hx-disabled-elt="this"
+              class="btn btn-ghost btn-undo">Undo</button>
+      {% if slot.human_verdict == "flagged" %}
+      <button hx-post="/slots/{{ slot.id }}/repick" hx-target="#slot-{{ slot.id }}"
+              hx-swap="outerHTML transition:true" hx-disabled-elt="this"
+              class="btn btn-outline-swap">Re-pick this beat</button>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if not slot.human_verdict %}
+    <form onsubmit="return false" style="display: grid; gap: 10px">
+      <input name="note" placeholder="Reason (optional) - attaches to keep, swap or flag" autocomplete="off" class="field">
+      <div class="btn-row">
+        <button hx-post="/slots/{{ slot.id }}/keep" hx-include="closest form"
+                hx-target="#slot-{{ slot.id }}" hx-swap="outerHTML transition:true"
+                hx-disabled-elt="this" class="btn btn-keep">Keep</button>
+        <button hx-post="/slots/{{ slot.id }}/weak" hx-include="closest form"
+                hx-target="#slot-{{ slot.id }}" hx-swap="outerHTML transition:true"
+                hx-disabled-elt="this" class="btn btn-weak"
+                title="Keep it, but it could be better">Could be better</button>
+        <button type="button"
+                onclick="this.closest('form').querySelector('[data-flags]').toggleAttribute('hidden')"
+                class="btn btn-outline-flag">Flag</button>
+        {% if slot.candidates %}
+        <button type="button"
+                onclick="this.closest('form').querySelector('[data-cands]').toggleAttribute('hidden')"
+                class="btn btn-outline-swap">Swap</button>
+        {% endif %}
+      </div>
+      {# Flags are grouped by what they blame: Clip flags down-weight the footage
+         everywhere; Fit/Render flags keep the clip good (wrong here / render issue). #}
+      <div data-flags hidden class="flag-rail">
+        {% for label, target, reasons in [
+            ("Bad clip", "clip", ["not clearly me", "too dark", "out of frame", "grainy", "setting up"]),
+            ("Good clip, wrong here", "fit", ["off-vibe", "repeat look"]),
+            ("Good clip, render issue", "render", ["caption placement"])] %}
+        <span class="flag-group-label mono">{{ label }}</span>
+        {% for reason in reasons %}
+        <button hx-post="/slots/{{ slot.id }}/flag" hx-vals='{"reason": "{{ reason }}"}'
+                hx-include="closest form" hx-target="#slot-{{ slot.id }}"
+                hx-swap="outerHTML transition:true" hx-disabled-elt="this"
+                data-target="{{ target }}" class="chip chip-error flag-chip">{{ reason }}</button>
+        {% endfor %}
+        {% endfor %}
+        <span class="flag-group-label mono">Something else</span>
+        {# "other" needs the typed note: judge.js blocks + nudges; the route 400s too #}
+        <button hx-post="/slots/{{ slot.id }}/flag" hx-vals='{"reason": "other"}'
+                hx-include="closest form" hx-target="#slot-{{ slot.id }}"
+                hx-swap="outerHTML transition:true" hx-disabled-elt="this"
+                data-requires-note class="chip chip-error flag-chip">other&hellip;</button>
+      </div>
+      {% if slot.candidates %}
+      <div data-cands hidden class="alt-rail">
+        <p class="grade-sub" style="flex: 1 1 100%; margin: 0 0 2px">Type a reason above (optional), then pick the clip to swap in.</p>
+        {% for c in slot.candidates %}
+        {% set alt_src = c.clip_key | proxy_url %}
+        <button hx-post="/slots/{{ slot.id }}/swap" hx-vals='{"moment_id": {{ c.moment_id }}}'
+                hx-include="closest form" hx-target="#slot-{{ slot.id }}"
+                hx-swap="outerHTML transition:true" hx-disabled-elt="this" class="alt">
+          <span class="alt-media">
+            {% if alt_src %}
+            <video class="beat-src" data-src="{{ alt_src }}" data-in="{{ c.in_point or 0 }}"
+                   data-dur="{{ dur }}" muted playsinline loop preload="none"
+                   {% if c.thumbnail_key %}poster="{{ c.thumbnail_key|thumb_url }}"{% endif %}></video>
+            <span class="play-overlay play-overlay-sm glass" role="button" tabindex="0"
+                  aria-label="Preview candidate">&#9654;</span>
+            {% elif c.thumbnail_key %}
+            <img src="{{ c.thumbnail_key|thumb_url }}" alt="">
+            {% endif %}
+          </span>
+          <span class="alt-text">
+            {{ c.reason or (c.clip_key or "?").rsplit("/", 1)[-1] }}
+            <span class="mono alt-score">score {{ "%.2f"|format(c.score or 0) }}</span>
+          </span>
+        </button>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </form>
+    {% endif %}
+  </div>
+</div>

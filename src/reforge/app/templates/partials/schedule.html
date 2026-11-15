@@ -1,0 +1,65 @@
+{# Trial-reel schedule surface, lazy-loaded into #schedule-area on the reel page.
+   Progressive disclosure: a normal-size button first; tapping it swaps in the full
+   panel (caption pre-filled from reels.caption, native date + time pickers, ET).
+   Root div re-listens for approve-area swaps so grading a reel reveals the button
+   without a page reload. #}
+<div id="schedule-area" class="grade-block"
+     hx-get="/reels/{{ reel_id }}/schedule"
+     hx-trigger="htmx:afterSwap from:#approve-area"
+     hx-swap="outerHTML">
+  {% if sched and sched.status in ("scheduled", "publishing") %}
+    <p class="grade-sub mono">
+      {{ "Trial reel" if sched.as_trial else "Reel" }}
+      {% if sched.status == "publishing" %}publishing now&hellip;
+      {% else %}scheduled &middot; {{ sched.when_local }}{% endif %}
+    </p>
+    {% if sched.status == "scheduled" %}
+    <div class="grade-row">
+      <button class="btn btn-outline-flag"
+              hx-post="/reels/{{ reel_id }}/schedule/cancel"
+              hx-target="#schedule-area" hx-swap="outerHTML"
+              hx-disabled-elt="this">Cancel schedule</button>
+    </div>
+    {% endif %}
+  {% elif sched and sched.status == "published" %}
+    <p class="grade-sub mono">Published{{ " as trial" if sched.as_trial }} &#10003;
+      &middot; {{ sched.published_local or sched.when_local }}</p>
+  {% elif approved and open_form and not published %}
+    <form hx-post="/reels/{{ reel_id }}/schedule"
+          hx-target="#schedule-area" hx-swap="outerHTML" class="schedule-form">
+      <input type="text" name="caption" class="mono" maxlength="2200"
+             value="{{ caption or '' }}" placeholder="caption (optional)">
+      <div class="schedule-row">
+        <input type="date" name="date" required class="mono">
+        <input type="time" name="time" required class="mono">
+      </div>
+      <label class="schedule-check mono">
+        <input type="checkbox" name="as_trial" checked>
+        trial reel (non-followers first) &middot; times are ET
+      </label>
+      <div class="grade-row">
+        <button type="button" class="btn btn-ghost"
+                hx-get="/reels/{{ reel_id }}/schedule"
+                hx-target="#schedule-area" hx-swap="outerHTML">Back</button>
+        <button type="submit" class="btn btn-keep"
+                hx-disabled-elt="this">Schedule</button>
+      </div>
+    </form>
+  {% else %}
+    {% if sched and sched.status == "error" %}
+    <p class="grade-sub mono">Publish failed: {{ sched.error }}</p>
+    {% elif sched and sched.status == "dry_run_done" %}
+    <p class="grade-sub mono">Dry run done &middot; nothing posted
+      (set PUBLISH_PROVIDER + PUBLISH_LIVE=1 to go live)</p>
+    {% endif %}
+    {% if approved and not published %}
+    <div class="grade-row">
+      <button class="btn btn-outline-swap"
+              hx-get="/reels/{{ reel_id }}/schedule?open=1"
+              hx-target="#schedule-area" hx-swap="outerHTML">
+        {{ "Reschedule" if sched and sched.status in ("canceled", "error", "dry_run_done") else "Schedule trial reel" }}
+      </button>
+    </div>
+    {% endif %}
+  {% endif %}
+</div>

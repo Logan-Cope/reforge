@@ -1,0 +1,36 @@
+# footage + outputs never in git
+/library/
+/output/
+/data/
+*.mp4
+*.mov
+*.MOV
+*.MP4
+# ...except the synthetic demo reels
+!/src/reforge/demo/media/output/*.mp4
+# identity reference photos (for the creator appearance match), never in git
+/identity_reference/
+# reference reels are other creators' videos, never in git
+/reference/
+# the live taste log holds personal judgments; tests use tests/fixtures/
+taste/taste-log.jsonl
+taste/gold-references/
+# downloaded ML models (mediapipe pose etc.)
+models/
+# secrets
+.env
+.env.*
+!.env.example
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+# os / tooling
+.DS_Store
+.vercel
+.claude/

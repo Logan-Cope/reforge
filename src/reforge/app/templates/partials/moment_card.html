@@ -1,0 +1,33 @@
+{% if moment %}
+<div class="card judge-card">
+  <div class="frame">
+    {% if moment.thumbnail_key %}
+    <img src="{{ moment.thumbnail_key|thumb_url }}" alt="">
+    {% endif %}
+    <div class="scrim"></div>
+    {% if moment.quality_score is not none %}
+    <span class="chip-tl glass">q {{ "%.2f"|format(moment.quality_score) }}</span>
+    {% endif %}
+  </div>
+  <div class="card-pad">
+    {% if moment.description %}
+    <p style="margin: 0; font-size: 14px">{{ moment.description }}</p>
+    {% else %}
+    <p class="mono" style="margin: 0">Moment {{ moment.id }}</p>
+    {% endif %}
+    <div class="verdict-row">
+      <button hx-post="/moments/{{ moment.id }}/rate" hx-vals='{"label": 0}'
+              hx-target="#curate-card" hx-swap="innerHTML swap:200ms"
+              class="verdict verdict-down" aria-label="Thumbs down">Cut</button>
+      <button hx-post="/moments/{{ moment.id }}/rate" hx-vals='{"label": 1}'
+              hx-target="#curate-card" hx-swap="innerHTML swap:200ms"
+              class="verdict verdict-up" aria-label="Thumbs up">Keep</button>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card all-done">
+  <div class="display">All caught up</div>
+  Nothing left to rate. New footage lands here first.
+</div>
+{% endif %}

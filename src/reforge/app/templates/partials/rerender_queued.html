@@ -1,0 +1,21 @@
+{# Live re-render status (lives inside #rerender-area). queued/running poll the status
+   route every 4s and swap themselves; done offers to load the fresh cut into the main
+   player (judge.js handles [data-load-new-cut]); error shows the tail + a retry. #}
+{% set status = status | default("queued") %}
+{% if status in ("queued", "running") %}
+<div class="rerender-banner rerender-live" hx-get="/reels/{{ reel_id }}/rerender/status"
+     hx-trigger="every 4s" hx-swap="outerHTML">
+  <span class="dot dot-pulse"></span>
+  {% if status == "running" %}Re-rendering with your swaps&hellip;{% else %}Re-render queued - the worker will produce a new cut{% endif %}
+</div>
+{% elif status == "done" %}
+<button type="button" class="btn btn-ember" data-load-new-cut
+        data-new-src="{{ video_url or '' }}">New cut ready - load it</button>
+{% elif status == "error" %}
+<div class="rerender-banner rerender-error">
+  <span class="rerender-error-text">Re-render failed{% if error %} &middot; <span class="mono">{{ error[-160:] }}</span>{% endif %}</span>
+  <button hx-post="/reels/{{ reel_id }}/rerender" hx-target="#rerender-area"
+          hx-swap="innerHTML transition:true" hx-disabled-elt="this"
+          class="btn btn-outline-flag rerender-retry">Retry</button>
+</div>
+{% endif %}

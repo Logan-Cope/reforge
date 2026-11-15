@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Curate - Reforge{% endblock %}
+{% block content %}
+<header class="page-head rise" style="--i: 0">
+  <a href="/" class="back">&lsaquo; Dashboard</a>
+  <h1 class="display kicker">Curate</h1>
+  <p class="page-sub">{{ counts.unrated_moments }} unrated &middot; teach the judge your eye</p>
+</header>
+
+<div class="judge-stage rise" style="--i: 1">
+  <div class="deck-hint"></div>
+  <div id="curate-card">{% include "partials/moment_card.html" %}</div>
+</div>
+{% endblock %}

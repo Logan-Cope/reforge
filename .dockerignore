@@ -1,0 +1,22 @@
+# NEVER ship footage, renders, or secrets into the image
+library/
+output/
+data/
+reference/
+identity_reference/
+taste/gold-references/
+taste/taste-log.jsonl
+models/
+.env
+.env.*
+.venv/
+.git/
+.pytest_cache/
+.ruff_cache/
+eval_results/
+notebooks/
+docs/
+*.mp4
+*.MP4
+*.mov
+*.MOV

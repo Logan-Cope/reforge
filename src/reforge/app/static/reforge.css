@@ -1,0 +1,708 @@
+/* ============================================================================
+   REFORGE - "The Grading Suite"
+   A dark post-production room, not a dashboard. Surfaces step by luminance
+   (no gray-border soup), media is full-bleed, metadata is mono like an edit
+   suite, and one molten-ember accent carries every call to action.
+   ==========================================================================*/
+
+:root {
+  /* surfaces: depth via luminance steps, not shadows/borders */
+  --bg: #0b0c0e;
+  --surface-1: #15171b;
+  --surface-2: #1e2126;
+  --surface-3: #25282e;
+  --hairline: rgba(255, 255, 255, 0.07);
+
+  /* text: slightly warm against the cool charcoal */
+  --text-1: #f4f3f0;
+  --text-2: rgba(232, 233, 238, 0.64);
+  --text-3: rgba(232, 233, 238, 0.40);
+
+  /* the forge */
+  --ember: #ff6a2b;
+  --ember-press: #e5561d;
+  --ember-dim: rgba(255, 106, 43, 0.14);
+
+  /* semantics */
+  --keep: #3ecf8e;
+  --keep-dim: rgba(62, 207, 142, 0.14);
+  --reject: #e5484d;
+  --reject-dim: rgba(229, 72, 77, 0.14);
+  --pending: #f5a623;
+  --pending-dim: rgba(245, 166, 35, 0.14);
+
+  --font-display: "Archivo", "Archivo Fallback", system-ui, sans-serif;
+  --font-body: "Instrument Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+
+  /* motion (M3 + Kowalski): enter slow, leave fast, press instant */
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.3, 0, 0.8, 0.15);
+  --ease-state: cubic-bezier(0.2, 0, 0, 1);
+  --t-enter: 320ms;
+  --t-exit: 200ms;
+  --t-state: 180ms;
+
+  --radius: 14px;
+  --radius-lg: 18px;
+}
+
+/* ---- reset-ish ---------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+img { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+button, input, select {
+  font: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+}
+button { cursor: pointer; padding: 0; }
+:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; border-radius: 6px; }
+
+/* film grain over chrome (never over media: media sits above via z-index) */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+main {
+  position: relative;
+  z-index: 2;
+  max-width: 30rem;
+  margin: 0 auto;
+  padding: 20px 16px calc(96px + env(safe-area-inset-bottom));
+}
+
+/* ---- type roles --------------------------------------------------------- */
+.display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 125%;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+}
+.mono {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-3);
+  text-transform: uppercase;
+}
+.kicker { font-size: 20px; }
+.title { font-size: 30px; }
+
+/* ---- header / page top --------------------------------------------------- */
+.page-head { margin: 6px 0 20px; }
+.page-head .back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-3);
+  font-size: 13px;
+  margin-bottom: 10px;
+  transition: color var(--t-state) var(--ease-state);
+}
+.page-head .back:active { color: var(--text-1); }
+.page-sub { color: var(--text-2); font-size: 13.5px; margin-top: 6px; }
+.wordmark { color: var(--text-1); }
+.wordmark em { color: var(--ember); font-style: normal; }
+
+/* ---- cards & surfaces ---------------------------------------------------- */
+.card {
+  background: var(--surface-1);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.card + .card { margin-top: 14px; }
+.card-pad { padding: 16px; }
+.pressable { transition: transform 100ms var(--ease-state), background var(--t-state) var(--ease-state); }
+.pressable:active { transform: scale(0.97); }
+
+.hairline-top { border-top: 1px solid var(--hairline); }
+
+/* ---- media frames -------------------------------------------------------- */
+.frame { position: relative; background: var(--surface-2); }
+.frame img, .frame video { width: 100%; height: 100%; object-fit: cover; }
+.frame .scrim {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 55%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0));
+  pointer-events: none;
+}
+.frame-hero { aspect-ratio: 16 / 10; }
+.frame-tall { aspect-ratio: 4 / 5; }
+
+.chip-tl, .chip-tr { position: absolute; top: 10px; }
+.chip-tl { left: 10px; }
+.chip-tr { right: 10px; }
+.glass {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(10, 10, 12, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 4px 8px;
+  border-radius: 7px;
+  text-transform: uppercase;
+}
+
+/* ---- status chips --------------------------------------------------------*/
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.chip-keep    { background: var(--keep-dim);    color: var(--keep); }
+.chip-weak    { background: var(--keep-dim);    color: var(--text-2); }  /* kept, but soft */
+.chip-swap    { background: var(--pending-dim); color: var(--pending); }
+.chip-error   { background: var(--reject-dim);  color: var(--reject); }
+.chip-neutral { background: var(--surface-2);   color: var(--text-2); }
+.chip-ember   { background: var(--ember-dim);   color: var(--ember); }
+
+.dot { width: 7px; height: 7px; border-radius: 999px; background: currentColor; }
+.dot-pulse { animation: pulse 1.6s var(--ease-state) infinite; }
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.8); }
+}
+
+/* ---- buttons -------------------------------------------------------------*/
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 52px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 15px;
+  transition: transform 100ms var(--ease-state), background var(--t-state) var(--ease-state),
+              filter var(--t-state) var(--ease-state);
+}
+.btn:active { transform: scale(0.97); }
+.btn-ember { background: var(--ember); color: #16090388; color: #1a0b04; }
+.btn-ember:active { background: var(--ember-press); }
+.btn-keep { background: var(--keep); color: #04241688; color: #06281a; }
+.btn-keep:active { filter: brightness(0.92); }
+.btn-weak { background: var(--keep-dim); color: var(--keep); }  /* softer keep: could be better */
+.btn-weak:active { filter: brightness(1.1); }
+.btn-ghost { background: var(--surface-2); color: var(--text-1); }
+.btn-ghost:active { background: var(--surface-3); }
+.btn-outline-swap { background: var(--pending-dim); color: var(--pending); }
+.btn-outline-swap:active { filter: brightness(1.1); }
+.btn-outline-flag { background: var(--reject-dim); color: var(--reject); }
+.btn-outline-flag:active { filter: brightness(1.1); }
+.btn[disabled] { opacity: 0.45; pointer-events: none; }
+
+/* Instant tap feedback: while an HTMX request is in flight the acting controls dim and
+   go inert (hx-disabled-elt="this" also hard-disables the tapped one - no double-taps). */
+.htmx-request .btn, .btn.htmx-request,
+.htmx-request .flag-chip, .flag-chip.htmx-request,
+.htmx-request .alt, .alt.htmx-request { opacity: 0.55; pointer-events: none; }
+.flag-chip[disabled], .alt[disabled] { opacity: 0.45; pointer-events: none; }
+.btn.htmx-request::after, .flag-chip.htmx-request::after {
+  content: ""; display: inline-block; vertical-align: -2px; margin-left: 7px;
+  width: 11px; height: 11px; border-radius: 50%;
+  border: 2px solid currentColor; border-top-color: transparent;
+  animation: rf-spin 0.6s linear infinite;
+}
+@keyframes rf-spin { to { transform: rotate(360deg); } }
+
+/* wrap to a 2-up grid when a fourth action (Could be better) makes one row too tight,
+   so every label stays on a single line; 2-3 buttons still share one row. */
+.btn-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn-row .btn { flex: 1 1 8rem; }
+
+/* ---- inputs --------------------------------------------------------------*/
+.field {
+  width: 100%;
+  min-height: 46px;
+  background: var(--surface-2);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--text-1);
+  transition: box-shadow var(--t-state) var(--ease-state);
+}
+.field::placeholder { color: var(--text-3); }
+.field:focus { outline: none; box-shadow: 0 0 0 2px var(--ember); }
+select.field {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888d98' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+/* ---- entrance choreography ----------------------------------------------*/
+@media (prefers-reduced-motion: no-preference) {
+  .rise {
+    opacity: 0;
+    transform: translateY(12px);
+    animation: rise var(--t-enter) var(--ease-enter) forwards;
+    animation-delay: calc(var(--i, 0) * 40ms);
+  }
+  @keyframes rise {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* htmx view-transition swaps */
+  ::view-transition-old(root) { animation: vt-out var(--t-exit) var(--ease-exit) both; }
+  ::view-transition-new(root) { animation: vt-in 300ms cubic-bezier(0.05, 0.7, 0.1, 1) both; }
+  @keyframes vt-out { to { opacity: 0; } }
+  @keyframes vt-in { from { opacity: 0; transform: translateY(8px); } }
+
+  /* curation card exit: the swipe-away feel without JS gestures */
+  .judge-card.htmx-swapping {
+    animation: toss var(--t-exit) var(--ease-exit) forwards;
+  }
+  @keyframes toss {
+    to { opacity: 0; transform: translateX(48%) rotate(5deg); }
+  }
+}
+
+/* ---- skeleton shimmer -----------------------------------------------------*/
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.05) 50%, transparent 70%);
+  animation: shimmer 1.2s linear infinite;
+}
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+/* ---- dashboard: poster wall ----------------------------------------------*/
+.poster-wall {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.poster {
+  position: relative;
+  display: block;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--surface-1);
+}
+.poster .frame { aspect-ratio: 9 / 16; } /* footage is vertical; 4/5 cropped the person */
+.poster-meta {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 12px;
+  z-index: 2;
+}
+.poster-title { font-weight: 600; font-size: 14px; }
+.poster-sub { font-size: 11.5px; color: rgba(255, 255, 255, 0.66); margin-top: 2px; }
+.poster .chip { position: absolute; top: 10px; right: 10px; z-index: 2; }
+.poster-empty {
+  grid-column: 1 / -1;
+  padding: 36px 20px;
+  text-align: center;
+  color: var(--text-3);
+  font-size: 13.5px;
+  background: var(--surface-1);
+  border-radius: var(--radius-lg);
+}
+
+/* run queue rows */
+.run-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 4px;
+}
+.run-row + .run-row { border-top: 1px solid var(--hairline); }
+.run-main { min-width: 0; }
+.run-name { font-size: 14px; font-weight: 500; }
+.run-meta { margin-top: 2px; }
+.run-meta a { color: var(--text-2); text-decoration: underline; text-underline-offset: 2px; }
+
+/* section headers */
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin: 26px 2px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-label::after { content: ""; flex: 1; height: 1px; background: var(--hairline); }
+
+/* starting a run: a quiet footer control, deliberately below the poster wall */
+.new-run {
+  margin: 34px 2px 8px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hairline);
+}
+
+/* ---- reel review ----------------------------------------------------------*/
+.progress-rail {
+  height: 3px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+  margin-top: 12px;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--ember);
+  border-radius: 999px;
+  transition: width 400ms var(--ease-enter);
+}
+
+.beat-card .judge-note {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text-2);
+  margin: 0;
+}
+.beat-card .ref-note { font-size: 12px; color: var(--text-3); margin: 0; }
+.beat-card .desc { font-size: 14px; color: var(--text-1); margin: 0; }
+.beat-card .human-note { font-size: 13px; color: var(--pending); margin: 0; }
+.beat-body { display: grid; gap: 10px; padding: 14px 16px 16px; }
+
+/* runner-up rail: horizontal snap */
+.alt-rail {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 2px;
+  margin: 2px -2px 0;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.alt-rail::-webkit-scrollbar { display: none; }
+.alt-rail[hidden] { display: none; }
+.alt {
+  scroll-snap-align: start;
+  flex: 0 0 72%;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  background: var(--surface-2);
+  border-radius: var(--radius);
+  padding: 10px;
+  transition: transform 100ms var(--ease-state), background var(--t-state) var(--ease-state);
+}
+.alt:active { transform: scale(0.97); background: var(--surface-3); }
+.alt img { width: 58px; height: 58px; border-radius: 10px; object-fit: cover; flex: none; }
+.alt-text { font-size: 12px; color: var(--text-2); line-height: 1.35; }
+.alt-score { display: block; margin-top: 3px; }
+
+/* sticky approve bar (thumb zone) */
+.approve-bar {
+  position: fixed;
+  z-index: 5;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(11, 12, 14, 0.96) 65%, rgba(11, 12, 14, 0));
+}
+/* the approve bar is tall when the re-render banner + grade block are both present, so
+   give the reel page's content extra bottom room - the last shot must never hide behind
+   it. Scoped to pages that actually have the bar (the dashboard keeps its normal spacing). */
+main:has(.approve-bar) { padding-bottom: calc(220px + env(safe-area-inset-bottom)); }
+.approve-bar-inner { max-width: 30rem; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.approve-bar .btn { flex: 1; }
+
+/* graded approve: one confidence dial for the whole reel. Wraps below the re-render
+   zone (full width) so the three grades share a row on a phone. */
+.grade-block { flex: 1 1 100%; display: flex; flex-direction: column; gap: 8px; }
+.grade-sub { margin: 0; text-align: center; font-size: 12px; color: var(--text-2); }
+.grade-row { display: flex; gap: 8px; }
+.grade-row .btn { flex: 1; }
+.grade-row .btn.is-active { outline: 2px solid currentColor; outline-offset: 2px; }
+
+/* re-render zone in the approve bar: the empty div takes no space; its content
+   (button or status banner) becomes a direct flex child of .approve-bar-inner */
+#rerender-area { display: contents; }
+.rerender-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  flex: 1;
+  padding: 6px 12px;
+}
+.rerender-live { background: var(--pending-dim); color: var(--pending); }
+.rerender-error {
+  background: var(--reject-dim);
+  color: var(--reject);
+  gap: 10px;
+  justify-content: space-between;
+}
+.rerender-error-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+.rerender-error-text .mono { font-weight: 400; font-size: 11px; }
+.approve-bar .rerender-retry { flex: none; width: auto; min-height: 38px; font-size: 13px; padding: 0 14px; }
+
+/* small ghost undo on decided cards */
+.btn-undo { width: auto; min-height: 36px; font-size: 13px; padding: 0 16px; justify-self: start; }
+
+.approved-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  border-radius: var(--radius);
+  background: var(--keep-dim);
+  color: var(--keep);
+  font-weight: 600;
+  flex: 1;
+}
+
+/* ---- curation -------------------------------------------------------------*/
+.judge-stage { position: relative; margin-top: 4px; }
+.judge-card { position: relative; z-index: 2; }
+.judge-card .frame { aspect-ratio: 9 / 16; max-height: 58vh; } /* vertical, still fits above verdicts */
+.deck-hint {
+  position: absolute;
+  inset: 10px -6px -8px -6px;
+  z-index: 1;
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+  transform: scale(0.94) translateY(10px);
+  opacity: 0.5;
+}
+.verdict-row { display: flex; gap: 12px; margin-top: 14px; }
+.verdict {
+  flex: 1;
+  min-height: 64px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  transition: transform 100ms var(--ease-state), filter var(--t-state) var(--ease-state);
+}
+.verdict:active { transform: scale(0.96); }
+.verdict-down { background: var(--surface-2); color: var(--reject); }
+.verdict-down:active { background: var(--reject-dim); }
+.verdict-up { background: var(--keep); color: #06281a; }
+.verdict-up:active { filter: brightness(0.92); }
+
+.all-done {
+  padding: 44px 20px;
+  text-align: center;
+  color: var(--text-2);
+}
+.all-done .display { color: var(--ember); font-size: 18px; margin-bottom: 8px; }
+
+/* ---- judgment pass: watch-first review -------------------------------------*/
+/* sticky player dock: the reel itself leads the review */
+.player-dock {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  margin: 0 -16px 18px;
+  padding: 8px 16px 4px;
+  background: linear-gradient(to bottom, var(--bg) 88%, rgba(11, 12, 14, 0));
+}
+.frame-player {
+  aspect-ratio: 9 / 16;
+  height: min(62vh, 168vw); /* 9:16 tall, capped so the beats stay reachable */
+  max-width: 100%;
+  margin: 0 auto;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #000;
+}
+.frame-player video { width: 100%; height: 100%; object-fit: contain; display: block; }
+/* judging mode: once you scroll into the beats, the player compacts but stays live */
+.player-dock.dock-mini .frame-player { height: min(30vh, 168vw); }
+.frame-player { transition: height 240ms var(--ease-state); }
+
+/* beat rail: one chip per slot, verdict ring + live (ember) highlight */
+.beat-rail {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 10px 2px 8px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.beat-rail::-webkit-scrollbar { display: none; }
+.beat-chip {
+  scroll-snap-align: center;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 5px 5px;
+  border-radius: 10px;
+  background: var(--surface-1);
+  border: 2px solid transparent;
+  transition: border-color var(--t-state) var(--ease-state),
+              background var(--t-state) var(--ease-state);
+}
+.beat-chip img { width: 40px; height: 56px; object-fit: cover; border-radius: 6px; }
+.beat-chip-keep    { border-color: var(--keep); }
+.beat-chip-weak    { border-color: var(--keep); border-style: dashed; }
+.beat-chip-swapped { border-color: var(--pending); }
+.beat-chip-flagged { border-color: var(--reject); }
+.beat-chip.beat-live { border-color: var(--ember); background: var(--ember-dim); }
+.beat-chip.beat-live .mono { color: var(--ember); }
+
+/* beat frames: true 9/16 (footage is vertical), height-capped for phones */
+.frame-beat {
+  aspect-ratio: 9 / 16;
+  width: min(100%, calc(420px * 9 / 16));
+  margin: 0 auto;
+  border-radius: var(--radius) var(--radius) 0 0;
+  overflow: hidden;
+}
+
+/* lazy proxy playback affordance */
+.play-overlay {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 14px;
+  z-index: 2;
+  cursor: pointer;
+  transition: opacity var(--t-state) var(--ease-state);
+}
+.play-overlay-sm { width: 32px; height: 32px; font-size: 10px; }
+.is-playing > .play-overlay { opacity: 0; } /* stays tappable: same spot pauses */
+
+/* "In reel" seek chip: only meaningful when the reel player is on the page */
+.chip-inreel { position: absolute; bottom: 10px; left: 10px; z-index: 2; cursor: pointer; display: none; }
+body.has-player .chip-inreel { display: inline-flex; }
+body.has-player .frame-beat { cursor: pointer; }
+
+/* flag reasons: quick taste-rule chips */
+.flag-rail { display: flex; flex-wrap: wrap; gap: 8px; }
+.flag-rail[hidden] { display: none; }
+/* each group label starts its own line so the chips read as Clip / Fit / Render sets */
+.flag-group-label { flex: 1 1 100%; margin: 6px 0 0; font-size: 11px; color: var(--text-3); }
+.flag-group-label:first-child { margin-top: 0; }
+.flag-chip { min-height: 36px; padding: 6px 12px; cursor: pointer; text-transform: none; }
+.flag-chip:active { filter: brightness(1.15); }
+
+/* "other" flag needs the note typed first: judge.js nudges the field */
+@keyframes field-shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+.field-shake { animation: field-shake 0.16s var(--ease-state) 2; box-shadow: 0 0 0 2px var(--reject); }
+
+/* cut freshness (approve bar): quiet all-good line + repick failure note */
+.cut-status { color: var(--text-3); font-size: 13px; }
+.repick-error { color: var(--reject); font-size: 12px; }
+
+/* candidate media: playable proxy thumb inside the swap rail */
+.alt-media {
+  position: relative;
+  width: 58px;
+  height: 88px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex: none;
+  background: var(--surface-3);
+}
+.alt-media img, .alt-media video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.alt .alt-media img { width: 100%; height: 100%; border-radius: 0; }
+
+/* wide screens: let the wall breathe */
+@media (min-width: 640px) {
+  main { max-width: 34rem; }
+  .poster-wall { grid-template-columns: 1fr 1fr 1fr; }
+}
+
+/* trial-reel scheduling (approve bar): the panel the Schedule button expands into */
+.schedule-form { display: flex; flex-direction: column; gap: 8px; }
+.schedule-form input[type="text"],
+.schedule-form input[type="date"],
+.schedule-form input[type="time"] {
+  background: var(--surface-2);
+  color: var(--text-1);
+  border: 1px solid var(--surface-3);
+  border-radius: 10px;
+  min-height: 44px;
+  padding: 0 12px;
+  font: inherit;
+  width: 100%;
+  color-scheme: dark; /* native date/time pickers render dark */
+}
+.schedule-row { display: flex; gap: 8px; }
+.schedule-row > * { flex: 1; min-width: 0; }
+.schedule-check { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2); }
+
+/* read-only demo (DEMO_READ_ONLY=1): writes are refused server-side; controls show disabled */
+.demo-ribbon {
+  position: sticky; top: 0; z-index: 50;
+  padding: 6px 16px; text-align: center;
+  font: 500 12px/1.4 var(--font-mono); letter-spacing: 0.04em;
+  color: var(--text-1); background: var(--surface-3);
+}
+.read-only [aria-disabled="true"], .read-only button:disabled,
+.read-only input:disabled, .read-only textarea:disabled, .read-only select:disabled {
+  opacity: 0.45; cursor: not-allowed;
+}

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-head rise" style="--i: 0">
+  <h1 class="display title wordmark">Re<em>forge</em></h1>
+  <p class="page-sub">{{ counts.reels }} runs &middot; {{ counts.approved }} approved</p>
+</header>
+
+<a href="/curate" class="card pressable rise" style="--i: 1; display: block">
+  <div class="card-pad" style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+    <div>
+      <div style="font-weight: 600">Curate moments</div>
+      <div class="page-sub" style="margin-top: 2px">{{ counts.unrated_moments }} unrated in the library</div>
+    </div>
+    <span class="chip chip-ember">Rate &rsaquo;</span>
+  </div>
+</a>
+
+{# scheduled + posted reels live on their own page (/posted) - the dashboard grid
+   stays a pure review queue #}
+{% set away = reels | selectattr("published") | list
+            + (reels | rejectattr("published") | selectattr("pending_post") | list) %}
+{% set queue_reels = reels | rejectattr("published") | rejectattr("pending_post") | list %}
+
+<div class="section-label rise"
+     style="--i: 4; display: flex; justify-content: space-between; align-items: baseline">
+  <span>Recent reels</span>
+  {% if away %}
+  <a href="/posted" class="back">Posted ({{ away | length }}) &rsaquo;</a>
+  {% endif %}
+</div>
+<ul class="poster-wall">
+  {% for r in queue_reels %}
+  <li class="rise" style="--i: {{ 5 + loop.index0 }}">
+    <a href="/reels/{{ r.id }}" class="poster pressable">
+      <div class="frame">
+        {% if r.thumbnail_key %}<img src="{{ r.thumbnail_key|thumb_url }}" alt="" loading="lazy">{% endif %}
+        <div class="scrim"></div>
+      </div>
+      {% if r.grade == 'post_worthy' %}
+      <span class="chip chip-keep">Post-worthy</span>
+      {% elif r.grade == 'would_test' %}
+      <span class="chip chip-swap">Would test</span>
+      {% elif r.grade == 'not_it' %}
+      <span class="chip glass">Passed</span>
+      {% else %}
+      <span class="chip glass">Review</span>
+      {% endif %}
+      <div class="poster-meta">
+        <div class="poster-title">Reel {{ r.id }}</div>
+        <div class="poster-sub">{{ (r.ref or "?").rsplit("/", 1)[-1] }} &middot; {{ r.slot_count }} beats &middot; {{ r.created }}</div>
+      </div>
+    </a>
+  </li>
+  {% else %}
+  <li class="poster-empty rise" style="--i: 5">
+    No runs yet. Start one below, or run <span class="mono">scripts/recreate.py</span>
+  </li>
+  {% endfor %}
+</ul>
+
+{# Starting a run is a quiet footer control, not the headline. Only runs still
+   in flight are listed; finished and errored history is noise on a dashboard
+   whose job is "what needs my review". #}
+{% set live_runs = runs | rejectattr("status", "equalto", "done")
+                        | rejectattr("status", "equalto", "error") | list %}
+<section class="new-run rise" style="--i: {{ 5 + (queue_reels | length) }}">
+  <form hx-post="/runs" hx-target="#run-list" hx-swap="afterbegin transition:true"
+        style="display: flex; gap: 10px; align-items: center">
+    <select name="reference_key" class="field" style="flex: 1; min-width: 0" aria-label="Reference reel">
+      {% for ref in references %}
+      <option value="{{ ref }}">{{ ref.rsplit("/", 1)[-1] }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn btn-ghost" style="width: auto; padding: 0 18px; flex: none">New run</button>
+  </form>
+  <ul id="run-list" style="list-style: none; padding: 0; margin: 10px 0 0">
+    {% for run in live_runs %}
+    {% include "partials/run_request.html" %}
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}
